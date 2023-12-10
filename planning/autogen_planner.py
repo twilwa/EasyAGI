@@ -1,6 +1,8 @@
 from typing import Optional, Dict, List
 import semantic_kernel, autogen
 import datetime
+import autogen
+from .agent_builder import AgentBuilder
 
 class AutoGenPlanner:
     """
@@ -17,12 +19,30 @@ class AutoGenPlanner:
         f"Reply TERMINATE when the task is done."
     )
 
-    def __init__(self, kernel: semantic_kernel.Kernel, llm_config: Dict = None, builder_config_path: str = None):
+    def __init__(self, kernel: semantic_kernel.Kernel, llm_config: Dict = None, builder_config_path: str = None, zilliz_config: Dict = None):
         self.kernel = kernel
         self.llm_config = llm_config or {}
         self.builder_config_path = builder_config_path
         self.validate_llm_config()
         self.builder = self.create_builder()
+        self.Zilliz_agent = ZillizRetrievalAgent(**zilliz_config) if zilliz_config else None
+
+    def execute_code(self, code: str) -> str:
+        """
+        Execute a Python code snippet and return the result.
+        Args:
+            code (str): The Python code to execute.
+        Returns:
+            str: The output of the executed code.
+        """
+        ipython = get_ipython()
+        result = ipython.run_cell(code)
+        output = str(result.result)
+        if result.error_before_exec is not None:
+            output += f"\n{result.error_before_exec}"
+        if result.error_in_exec is not None:
+            output += f"\n{result.error_in_exec}"
+        return output
 
     def create_builder(self) -> autogen.agentchat.contrib.agent_builder.AgentBuilder:
         """
@@ -61,6 +81,11 @@ class AutoGenPlanner:
             max_consecutive_auto_reply=max_auto_reply,
             function_map=self.__get_function_map(),
         )
+    
+    def perform_retrieval(self, query_vector: List[float], top_k: int = 10):
+        if not self.Zilliz_agent:
+            raise ValueError("Zilliz agent is not configured.")
+        return self.Zilliz_agent.search([query_vector], top_k, {"nprobe": 16})
 
     def validate_llm_config(self):
         if self.llm_config.get("type") == "openai":

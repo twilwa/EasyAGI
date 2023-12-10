@@ -3,6 +3,7 @@ typing-extensions
 pydantic
 python-dotenv
 gradio
+openai
 azure-common
 azure-core
 azure-search-documents
@@ -21,3 +22,5 @@ microsoft-bing-customimagesearch
 microsoft-bing-customwebsearch
 msrest
 msrestazure
+pymilvus
+bs4
