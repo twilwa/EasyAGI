@@ -19,12 +19,7 @@ license: mit
 
 ## Use and Install on the Command Line
 
-```bash
-git clone https://github.com/Tonic-AI/EasyAGI
-```
 
-```bash
-cd EasyAGI
 ```
 
 If you're on Windows :
